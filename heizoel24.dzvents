@@ -1,0 +1,62 @@
+return {
+	on = {
+		timer = {
+		    -- 'every minute',
+		    'at 08:20',
+			-- 'at 14:15',
+		},
+		httpResponses = {
+			'Heizoel24DataReceived'
+		}
+	},
+	logging = {
+		-- level = domoticz.LOG_DEBUG,
+		-- level = domoticz.LOG_INFO,
+		-- level = domoticz.LOG_MODULE_EXEC_INFO,
+		level = domoticz.LOG_ERROR,
+		marker = 'dz-heizoel24',
+	},
+	execute = function(domoticz, event)
+        -- domoticz.log('Timer event was triggered by ' .. event.trigger, domoticz.LOG_INFO)
+
+		if (event.isTimer) then
+			domoticz.openURL({
+				url = 'https://www.heizoel24.de/api/site/1/prices/history?amount=1000&productId=1&rangeType=1',
+				method = 'GET',
+				callback = 'Heizoel24DataReceived',
+			})
+		elseif (event.isHTTPResponse) then
+			if (event.ok) then
+				if (event.isJSON) then
+                    local JsonObject = domoticz.utils.fromJSON(event.data)
+                    local Today = domoticz.time.timestampToDate(nil, 'yyyy-mm-ddT00:00:00')
+                    local Price = 0
+                    local NotifyMinPrice = 90
+                    local SensorID = 46
+                    
+                    -- loop through response array to find today
+                    for index, value in ipairs(JsonObject) do
+                        if (value.DateTime == Today) then
+                            -- domoticz.log('idx: ' .. index .. ': '.. value.DateTime .. ' = ' .. value.Price, domoticz.LOG_ERROR)
+                            Price = value.Price
+                        end
+                    end
+                    
+                    if (Price > 0) then
+                        if (domoticz.devices(SensorID).sensorValue ~= Price) then
+    					    domoticz.log('------: update Heizöl : ' .. domoticz.devices(SensorID).sensorValue .. ' -> ' .. Price, domoticz.LOG_FORCE)
+                            domoticz.devices(SensorID).updateCustomSensor(Price)
+                            
+                            if (Price < NotifyMinPrice) then
+                                domoticz.notify('dz-heizoel24', 'Achtung! Heizölpreis (' .. Price .. ' €) unter ' .. NotifyMinPrice .. ' €', domoticz.PRIORITY_NORMAL)
+                            end
+                        end
+                    end
+				end
+			else
+				domoticz.log('There was a problem handling the request', domoticz.LOG_ERROR)
+				domoticz.log(item, domoticz.LOG_ERROR)
+			end
+		end
+	end
+}
