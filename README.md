@@ -1,12 +1,12 @@
-# heizoel24 
+# heizoel24
 
 Code examples for this discussion: https://mastodontech.de/@mlnf/113593146936580139
 
 ## dzVents Version (Domoticz)
 
-*Prerequisites*  
-Running instance of [Domoticz](https://www.domoticz.com/)  
-New, empty dzVents script  
+*Prerequisites*
+Running instance of [Domoticz](https://www.domoticz.com/)
+New, empty dzVents script
 
 ## Bash Version (Linux)
 
@@ -34,3 +34,9 @@ curl -L -o jq.exe "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-wi
 heizoel24.bat
 ```
 
+## PowerShell Version
+
+*Run*
+```
+./heizoel24.ps1
+```
